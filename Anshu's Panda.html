@@ -1,0 +1,551 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Anshu's Panda</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Pacifico&display=swap">
+<style>
+/* Layout: two full-screen scenes. Scene 1 is a play field where a panda hops to random spots.
+   Tapping the panda wipes the screen in rose and reveals scene 2, a love note with floating hearts. */
+:root {
+  --blush: #ffe4ec;
+  --blush-deep: #ffc7d6;
+  --rose: #ff4d79;
+  --berry: #d6336c;
+  --berry-dark: #b3174a;
+  --ink: #2a2330;
+  --cream: #fff6f8;
+  --font-display: "Pacifico", "Brush Script MT", cursive;
+  --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--blush);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; }
+
+.view {
+  position: absolute;
+  inset: 0;
+  padding-block: 20px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow: hidden;
+}
+
+/* ---------- Scene 1 ---------- */
+#view1 {
+  background:
+    radial-gradient(60vmax 60vmax at 15% 10%, #fff1f5 0%, rgba(255,241,245,0) 60%),
+    radial-gradient(50vmax 50vmax at 90% 95%, var(--blush-deep) 0%, rgba(255,199,214,0) 65%),
+    var(--blush);
+}
+.title {
+  position: absolute;
+  top: clamp(20px, 7%, 64px);
+  left: 0; right: 0;
+  text-align: center;
+  pointer-events: none;
+  padding-inline: 16px;
+}
+.title h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2rem, 8vw, 3.4rem);
+  color: var(--berry);
+  text-wrap: balance;
+  line-height: 1.15;
+}
+.title p {
+  margin: 8px 0 0;
+  font-weight: 600;
+  color: var(--berry-dark);
+  font-size: clamp(0.95rem, 3.4vw, 1.1rem);
+}
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: var(--cream);
+  color: var(--berry-dark);
+  border: 2px solid var(--berry);
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  animation: hint 1.6s ease-in-out infinite;
+}
+@keyframes hint {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+
+.panda {
+  --pw: clamp(120px, 28vmin, 180px);
+  position: absolute;
+  left: 0; top: 0;
+  width: var(--pw);
+  height: calc(var(--pw) * 1.1);
+  z-index: 5;
+  will-change: transform;
+}
+.panda .shadow {
+  position: absolute;
+  left: 18%; right: 18%;
+  bottom: -6px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(179, 23, 74, 0.22);
+}
+.panda .body {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform-origin: 50% 100%;
+  outline: none;
+}
+.panda .body:focus-visible { outline: 3px dashed var(--berry); outline-offset: 6px; border-radius: 24px; }
+.panda .face-dir { width: 100%; height: 100%; display: block; }
+.panda svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.panda.caught .body { animation: caught 0.7s ease-in-out forwards; }
+@keyframes caught {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.35, 0.85) rotate(-6deg); }
+  55% { transform: scale(1.2, 1.3) rotate(6deg); }
+  100% { transform: scale(1.5) rotate(0); }
+}
+
+/* blinking */
+.eye { transform-box: fill-box; transform-origin: center; animation: blink 4s infinite; }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
+
+/* ---------- Floating hearts ---------- */
+.hearts { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.heart-float {
+  position: absolute;
+  bottom: -60px;
+  opacity: 0;
+  animation: rise var(--dur) linear var(--delay) infinite;
+}
+.heart-float svg { display: block; width: 100%; height: 100%; }
+@keyframes rise {
+  0% { transform: translate3d(0, 0, 0) rotate(-12deg); opacity: 0; }
+  10% { opacity: 0.85; }
+  50% { transform: translate3d(var(--dx), -55vh, 0) rotate(10deg); }
+  100% { transform: translate3d(calc(var(--dx) * -0.6), -118vh, 0) rotate(-8deg); opacity: 0; }
+}
+.burst-layer { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; }
+.burst-layer .b { position: absolute; left: 0; top: 0; }
+
+/* ---------- Wipe ---------- */
+.wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  clip-path: circle(0px at 50% 50%);
+}
+
+/* ---------- Scene 2 ---------- */
+#view2 {
+  background: radial-gradient(90vmax 90vmax at 50% 38%, #ec4a82 0%, var(--berry) 45%, #b8245b 100%);
+  color: var(--cream);
+  overflow-y: auto;
+}
+.note {
+  position: relative;
+  z-index: 2;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding-block: 12px;
+}
+.love-panda { width: clamp(140px, 30vmin, 210px); animation: sway 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+.love-panda svg { width: 100%; display: block; overflow: visible; }
+@keyframes sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg) translateY(-6px); } }
+.belly-heart { transform-box: fill-box; transform-origin: center; animation: beat 1.1s ease-in-out infinite; }
+@keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(1); } 45% { transform: scale(1.12); } }
+
+.iloveyou {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 9vw, 3.6rem);
+  line-height: 1.1;
+  opacity: 0;
+}
+.name {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(4.4rem, 22vw, 9rem);
+  line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 5px 0 var(--berry-dark), 0 12px 24px rgba(120, 10, 50, 0.35);
+}
+.name span { display: inline-block; opacity: 0; transform-origin: 50% 100%; }
+.sub {
+  margin: 10px 0 0;
+  font-weight: 800;
+  font-size: clamp(1rem, 3.8vw, 1.25rem);
+  color: #ffd9e4;
+  opacity: 0;
+  text-wrap: balance;
+  max-width: 24ch;
+}
+.again {
+  margin-top: 18px;
+  background: var(--cream);
+  color: var(--berry-dark);
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 26px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--berry-dark);
+  opacity: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.again:hover { transform: translateY(-2px); }
+.again:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--berry-dark); }
+.again:focus-visible { outline: 3px dashed #fff; outline-offset: 4px; }
+
+#view2.play .iloveyou { animation: fadeUp 0.9s ease-out 0.35s forwards; }
+#view2.play .name span { animation: pop 0.75s cubic-bezier(.3, 1.6, .5, 1) forwards; animation-delay: calc(0.9s + var(--i) * 0.14s); }
+#view2.play .sub { animation: fadeUp 0.9s ease-out 2s forwards; }
+#view2.play .again { animation: fadeUp 0.9s ease-out 2.6s forwards; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop {
+  0% { opacity: 0; transform: translateY(40px) scale(0.3) rotate(-14deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+#view2.play .name.settled span { animation: wave 2.6s ease-in-out infinite; animation-delay: calc(var(--i) * 0.12s); opacity: 1; }
+@keyframes wave { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px) rotate(-2deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hint, .love-panda, .belly-heart, .eye { animation: none; }
+  .heart-float { animation-duration: 40s; }
+  #view2.play .name span, #view2.play .iloveyou, #view2.play .sub, #view2.play .again { animation-duration: 0.01s; animation-delay: 0s; }
+  #view2.play .name.settled span { animation: none; }
+}
+</style>
+
+<main>
+  <section id="view1" aria-label="Catch the panda">
+    <div class="hearts" id="hearts1"></div>
+    <div class="title">
+      <h1>Catch the panda</h1>
+      <p>He only hops for someone special.</p>
+    </div>
+    <div class="panda" id="panda">
+      <div class="shadow" id="shadow"></div>
+      <button class="body" id="pandaBtn" type="button" aria-label="Tap the panda">
+        <div class="face-dir" id="faceDir"></div>
+      </button>
+    </div>
+    <div class="hint">Tap the panda</div>
+  </section>
+
+  <section id="view2" aria-label="A note for Anshu" hidden>
+    <div class="hearts" id="hearts2"></div>
+    <div class="note">
+      <div class="love-panda" id="lovePanda"></div>
+      <p class="iloveyou">I love you</p>
+      <h2 class="name" id="name" aria-label="Anshu"></h2>
+      <p class="sub">Every day with you is my favourite day.</p>
+      <button class="again" id="again" type="button">Hop again</button>
+    </div>
+  </section>
+
+  <div class="wipe" id="wipe" hidden></div>
+  <div class="burst-layer" id="burst"></div>
+</main>
+
+<script>
+(function () {
+  var INK = "#2a2330";
+  var HEART_PATH = "M16 28C4 19 0 13 0 8a8 8 0 0 1 16-3 8 8 0 0 1 16 3c0 5-4 11-16 20z";
+
+  function heartSVG(color) {
+    return '<svg viewBox="0 0 32 29" aria-hidden="true"><path d="' + HEART_PATH + '" fill="' + color + '"/></svg>';
+  }
+
+  function pandaSVG(withHeart) {
+    var heart = withHeart
+      ? '<path class="belly-heart" d="M100 178C72 156 72 130 90 130c6 0 10 4 10 8 0-4 4-8 10-8 18 0 18 26-10 48z" fill="#ff4d79" stroke="' + INK + '" stroke-width="3" stroke-linejoin="round"/>'
+      : '';
+    return '<svg viewBox="0 0 200 220" aria-hidden="true">' +
+      '<ellipse cx="62" cy="196" rx="28" ry="20" fill="' + INK + '"/>' +
+      '<ellipse cx="138" cy="196" rx="28" ry="20" fill="' + INK + '"/>' +
+      '<ellipse cx="100" cy="150" rx="62" ry="54" fill="#fff" stroke="' + INK + '" stroke-width="3"/>' +
+      '<ellipse cx="40" cy="146" rx="19" ry="34" fill="' + INK + '" transform="rotate(18 40 146)"/>' +
+      '<ellipse cx="160" cy="146" rx="19" ry="34" fill="' + INK + '" transform="rotate(-18 160 146)"/>' +
+      heart +
+      '<circle cx="50" cy="40" r="19" fill="' + INK + '"/>' +
+      '<circle cx="150" cy="40" r="19" fill="' + INK + '"/>' +
+      '<circle cx="100" cy="86" r="58" fill="#fff" stroke="' + INK + '" stroke-width="3"/>' +
+      '<ellipse cx="72" cy="86" rx="15" ry="21" fill="' + INK + '" transform="rotate(24 72 86)"/>' +
+      '<ellipse cx="128" cy="86" rx="15" ry="21" fill="' + INK + '" transform="rotate(-24 128 86)"/>' +
+      '<g class="eye"><circle cx="74" cy="84" r="6.5" fill="#fff"/><circle cx="75" cy="85" r="4" fill="' + INK + '"/><circle cx="76.2" cy="83.3" r="1.4" fill="#fff"/></g>' +
+      '<g class="eye"><circle cx="126" cy="84" r="6.5" fill="#fff"/><circle cx="125" cy="85" r="4" fill="' + INK + '"/><circle cx="126.2" cy="83.3" r="1.4" fill="#fff"/></g>' +
+      '<ellipse cx="100" cy="104" rx="9" ry="6" fill="' + INK + '"/>' +
+      '<path d="M91 114q9 9 18 0" fill="none" stroke="' + INK + '" stroke-width="3" stroke-linecap="round"/>' +
+      '<circle cx="56" cy="110" r="9" fill="#ff8fab" opacity="0.7"/>' +
+      '<circle cx="144" cy="110" r="9" fill="#ff8fab" opacity="0.7"/>' +
+      '</svg>';
+  }
+
+  var view1 = document.getElementById("view1");
+  var view2 = document.getElementById("view2");
+  var panda = document.getElementById("panda");
+  var pandaBtn = document.getElementById("pandaBtn");
+  var faceDir = document.getElementById("faceDir");
+  var shadow = document.getElementById("shadow");
+  var wipe = document.getElementById("wipe");
+  var burstLayer = document.getElementById("burst");
+  var nameEl = document.getElementById("name");
+
+  faceDir.innerHTML = pandaSVG(false);
+  document.getElementById("lovePanda").innerHTML = pandaSVG(true);
+
+  var letters = "Anshu".split("");
+  letters.forEach(function (ch, i) {
+    var s = document.createElement("span");
+    s.textContent = ch;
+    s.style.setProperty("--i", i);
+    s.setAttribute("aria-hidden", "true");
+    nameEl.appendChild(s);
+  });
+
+  /* ---------- floating hearts ---------- */
+  function seedHearts(container, count, colors) {
+    for (var i = 0; i < count; i++) {
+      var h = document.createElement("div");
+      h.className = "heart-float";
+      var size = 14 + Math.random() * 28;
+      h.style.width = size + "px";
+      h.style.height = size * 0.9 + "px";
+      h.style.left = Math.random() * 100 + "%";
+      h.style.setProperty("--dur", 9 + Math.random() * 9 + "s");
+      h.style.setProperty("--delay", -Math.random() * 16 + "s");
+      h.style.setProperty("--dx", (Math.random() * 80 - 40) + "px");
+      h.innerHTML = heartSVG(colors[i % colors.length]);
+      container.appendChild(h);
+    }
+  }
+  seedHearts(document.getElementById("hearts1"), 14, ["#ff8fab", "#ff4d79", "#ffb3c6", "#ff6f91"]);
+  seedHearts(document.getElementById("hearts2"), 18, ["#ffd1de", "#ff9db8", "#ffe4ec", "#ff7aa2"]);
+
+  /* ---------- heart burst ---------- */
+  function burst(x, y, n, colors) {
+    for (var i = 0; i < n; i++) {
+      var b = document.createElement("div");
+      b.className = "b";
+      var size = 16 + Math.random() * 22;
+      b.style.width = size + "px";
+      b.style.height = size * 0.9 + "px";
+      b.innerHTML = heartSVG(colors[i % colors.length]);
+      burstLayer.appendChild(b);
+      var ang = (Math.PI * 2 * i) / n + Math.random() * 0.4;
+      var dist = 90 + Math.random() * 150;
+      var dx = Math.cos(ang) * dist;
+      var dy = Math.sin(ang) * dist - 40;
+      var rot = Math.random() * 120 - 60;
+      var anim = b.animate([
+        { transform: "translate(" + (x - size / 2) + "px," + (y - size / 2) + "px) scale(0.2) rotate(0deg)", opacity: 1 },
+        { transform: "translate(" + (x + dx - size / 2) + "px," + (y + dy - size / 2) + "px) scale(1.1) rotate(" + rot + "deg)", opacity: 1, offset: 0.7 },
+        { transform: "translate(" + (x + dx * 1.15 - size / 2) + "px," + (y + dy * 1.15 + 30 - size / 2) + "px) scale(0.8) rotate(" + rot * 1.3 + "deg)", opacity: 0 }
+      ], { duration: 900 + Math.random() * 500, easing: "cubic-bezier(.2,.8,.3,1)", fill: "forwards" });
+      anim.onfinish = (function (el) { return function () { el.remove(); }; })(b);
+    }
+  }
+
+  /* ---------- hopping panda ---------- */
+  var running = false;
+  var pos = { x: 0, y: 0 };
+  var phase = "rest", t0 = 0, from = { x: 0, y: 0 }, to = { x: 0, y: 0 }, dur = 1000, hgt = 60;
+  var LAND = 260;
+  var rafId = 0;
+
+  function bounds() {
+    var W = view1.clientWidth, H = view1.clientHeight;
+    var pw = panda.offsetWidth, ph = panda.offsetHeight;
+    return {
+      minX: pw / 2 + 12,
+      maxX: Math.max(pw / 2 + 12, W - pw / 2 - 12),
+      minY: Math.max(ph + 110, H * 0.4),
+      maxY: Math.max(ph + 120, H - 78)
+    };
+  }
+
+  function pickTarget() {
+    var b = bounds();
+    var tx, ty, tries = 0;
+    do {
+      tx = b.minX + Math.random() * (b.maxX - b.minX);
+      ty = b.minY + Math.random() * (b.maxY - b.minY);
+      tries++;
+    } while (Math.hypot(tx - pos.x, ty - pos.y) < 120 && tries < 12);
+    return { x: tx, y: ty };
+  }
+
+  function startHop(now) {
+    from = { x: pos.x, y: pos.y };
+    to = pickTarget();
+    var d = Math.hypot(to.x - from.x, to.y - from.y);
+    dur = 800 + Math.min(d, 500) * 0.8 + Math.random() * 200;
+    hgt = 45 + Math.random() * 55;
+    t0 = now;
+    phase = "hop";
+    faceDir.style.transform = to.x >= from.x ? "scaleX(1)" : "scaleX(-1)";
+  }
+
+  function apply(jump, sx, sy) {
+    var pw = panda.offsetWidth, ph = panda.offsetHeight;
+    panda.style.transform = "translate3d(" + (pos.x - pw / 2) + "px," + (pos.y - ph) + "px,0)";
+    pandaBtn.style.transform = "translateY(" + (-jump) + "px) scale(" + sx + "," + sy + ")";
+    var k = Math.min(1, jump / 100);
+    shadow.style.transform = "scale(" + (1 - 0.4 * k) + ")";
+    shadow.style.opacity = String(1 - 0.5 * k);
+  }
+
+  function frame(now) {
+    if (!running) return;
+    if (phase === "hop") {
+      var t = (now - t0) / dur;
+      if (t >= 1) {
+        pos.x = to.x; pos.y = to.y;
+        phase = "land"; t0 = now;
+        apply(0, 1.12, 0.86);
+      } else {
+        var e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        var lin = 0.35 * t + 0.65 * e;
+        pos.x = from.x + (to.x - from.x) * lin;
+        pos.y = from.y + (to.y - from.y) * lin;
+        var jump = 4 * hgt * t * (1 - t);
+        var s = Math.sin(Math.PI * t);
+        apply(jump, 1 - 0.08 * s, 1 + 0.12 * s);
+      }
+    } else if (phase === "land") {
+      var k = (now - t0) / LAND;
+      if (k >= 1) {
+        startHop(now);
+      } else {
+        var sq = 1 - k;
+        apply(0, 1 + 0.12 * sq, 1 - 0.14 * sq);
+      }
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function startPanda() {
+    if (running) return;
+    var b = bounds();
+    pos = { x: (b.minX + b.maxX) / 2, y: b.maxY - 10 };
+    panda.classList.remove("caught");
+    pandaBtn.style.transform = "";
+    apply(0, 1, 1);
+    running = true;
+    phase = "land"; t0 = performance.now();
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function stopPanda() {
+    running = false;
+    cancelAnimationFrame(rafId);
+  }
+
+  /* ---------- scene changes ---------- */
+  var busy = false;
+  function transition(color, ox, oy, swap) {
+    wipe.style.background = color;
+    wipe.hidden = false;
+    wipe.style.opacity = "1";
+    wipe.style.transition = "none";
+    wipe.style.clipPath = "circle(0px at " + ox + "px " + oy + "px)";
+    void wipe.offsetWidth;
+    wipe.style.transition = "clip-path 0.85s cubic-bezier(.6,0,.3,1)";
+    wipe.style.clipPath = "circle(150vmax at " + ox + "px " + oy + "px)";
+    setTimeout(function () {
+      swap();
+      wipe.style.transition = "opacity 0.6s ease";
+      wipe.style.opacity = "0";
+    }, 900);
+    setTimeout(function () {
+      wipe.hidden = true;
+      busy = false;
+    }, 1550);
+  }
+
+  function showLove() {
+    view1.hidden = true;
+    view2.hidden = false;
+    nameEl.classList.remove("settled");
+    view2.classList.remove("play");
+    void view2.offsetWidth;
+    view2.classList.add("play");
+    setTimeout(function () { nameEl.classList.add("settled"); }, 2600);
+    burst(window.innerWidth / 2, window.innerHeight * 0.35, 16, ["#ffd1de", "#fff", "#ff9db8"]);
+  }
+
+  pandaBtn.addEventListener("click", function () {
+    if (busy) return;
+    busy = true;
+    stopPanda();
+    panda.classList.add("caught");
+    var r = pandaBtn.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    burst(cx, cy, 22, ["#ff4d79", "#ff8fab", "#ffb3c6", "#d6336c"]);
+    setTimeout(function () {
+      transition("#d6336c", cx, cy, showLove);
+    }, 650);
+  });
+
+  document.getElementById("again").addEventListener("click", function (e) {
+    if (busy) return;
+    busy = true;
+    var r = e.currentTarget.getBoundingClientRect();
+    transition("#ffe4ec", r.left + r.width / 2, r.top + r.height / 2, function () {
+      view2.hidden = true;
+      view1.hidden = false;
+      view2.classList.remove("play");
+      startPanda();
+    });
+  });
+
+  window.addEventListener("resize", function () {
+    if (!running) return;
+    var b = bounds();
+    pos.x = Math.min(Math.max(pos.x, b.minX), b.maxX);
+    pos.y = Math.min(Math.max(pos.y, b.minY), b.maxY);
+  });
+
+  startPanda();
+})();
+</script>
+
+</body></html>
